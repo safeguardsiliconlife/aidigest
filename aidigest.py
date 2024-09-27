@@ -14,6 +14,7 @@ import magic
 import fnmatch
 from glob import glob
 from datetime import datetime
+import subprocess
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB in bytes
 
@@ -225,6 +226,45 @@ async def aggregate_files(input_patterns: List[str], exclude_patterns: List[str]
     print(format_log(f"Done! Wrote code base to {output_file}", '✅'))
     print(format_log(f"Info file written to {os.path.join(output_dir, 'info.txt')}", '📄'))
 
+    # Set LATEST_AIDIGEST environment variable
+    os.environ['LATEST_AIDIGEST'] = output_file
+    print(format_log(f"LATEST_AIDIGEST set to: {output_file}", '🔗'))
+
+def list_recent_outputs(base_dir: str):
+    aidigest_dir = os.path.join(base_dir, "aidigest")
+    if not os.path.isdir(aidigest_dir):
+        print(format_log(f"No aidigest folder found in {base_dir}", '❌'))
+        return
+
+    recent_folders = sorted([f for f in os.listdir(aidigest_dir) if os.path.isdir(os.path.join(aidigest_dir, f))], reverse=True)[:5]
+
+    if not recent_folders:
+        print(format_log(f"No aidigest outputs found in {aidigest_dir}", '❌'))
+        return
+
+    print(format_log("Recent aidigest outputs:", '📋'))
+    for folder in recent_folders:
+        info_file = os.path.join(aidigest_dir, folder, "info.txt")
+        if os.path.isfile(info_file):
+            print(f"Timestamp: {folder}")
+            with open(info_file, 'r') as f:
+                print(f.read())
+            print("----------------------------------------")
+
+    latest_folder = recent_folders[0]
+    latest_aidigest = os.path.join(aidigest_dir, latest_folder, "aidigest")
+    if os.path.isfile(latest_aidigest):
+        os.environ['LATEST_AIDIGEST'] = os.path.realpath(latest_aidigest)
+        print(format_log(f"LATEST_AIDIGEST set to: {os.environ['LATEST_AIDIGEST']}", '🔗'))
+    else:
+        print(format_log("No aidigest file found in the most recent folder", '⚠️'))
+
+def open_latest_aidigest():
+    if 'LATEST_AIDIGEST' in os.environ and os.path.isfile(os.environ['LATEST_AIDIGEST']):
+        subprocess.run(['vim', os.environ['LATEST_AIDIGEST']])
+    else:
+        print(format_log("LATEST_AIDIGEST is not set or the file does not exist. Run aidigest or use -l option first.", '⚠️'))
+
 def main():
     parser = argparse.ArgumentParser(description='Aggregate files into a single Markdown file')
     parser.add_argument('input', nargs='*', default=['.'], help='Input files or directories (glob patterns supported)')
@@ -233,13 +273,18 @@ def main():
     parser.add_argument('--no-default-ignores', action='store_false', dest='default_ignores', help='Disable default ignore patterns')
     parser.add_argument('--whitespace-removal', action='store_true', help='Enable whitespace removal')
     parser.add_argument('--show-output-files', action='store_true', help='Display a list of files included in the output')
+    parser.add_argument('-l', '--list', action='store_true', help='List recent aidigest outputs')
+    parser.add_argument('-v', '--view', action='store_true', help='Open the latest aidigest file in Vim')
     
     args = parser.parse_args()
     
-    command = ' '.join(sys.argv)
-    
-    asyncio.run(aggregate_files(args.input, args.exclude, args.output, args.default_ignores, args.whitespace_removal, args.show_output_files, command))
+    if args.list:
+        list_recent_outputs(args.output)
+    elif args.view:
+        open_latest_aidigest()
+    else:
+        command = ' '.join(sys.argv)
+        asyncio.run(aggregate_files(args.input, args.exclude, args.output, args.default_ignores, args.whitespace_removal, args.show_output_files, command))
 
 if __name__ == "__main__":
     main()
-
