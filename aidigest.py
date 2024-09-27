@@ -87,11 +87,15 @@ def should_treat_as_binary(file_path: str) -> bool:
 
 class IgnoreFilter:
     def __init__(self, patterns: List[str]):
-        self.patterns = [os.path.normpath(pattern.lstrip('./')) for pattern in patterns]
+        self.patterns = [os.path.normpath(pattern) for pattern in patterns]
 
     def ignores(self, path: str) -> bool:
         relative_path = os.path.normpath(os.path.relpath(path))
-        return any(fnmatch.fnmatch(relative_path, pattern) for pattern in self.patterns)
+        for pattern in self.patterns:
+            pattern = os.path.normpath(pattern)
+            if relative_path == pattern or relative_path.startswith(os.path.join(pattern, '')):
+                return True
+        return False
 
 def collect_files(input_patterns: List[str], exclude_patterns: List[str]) -> Set[str]:
     all_files = set()
@@ -137,7 +141,7 @@ async def aggregate_files(input_patterns: List[str], exclude_patterns: List[str]
 
     user_ignore_patterns = await read_ignore_file(os.getcwd())  # Read from current directory
     default_ignore = IgnoreFilter(DEFAULT_IGNORES if use_default_ignores else [])
-    custom_ignore = IgnoreFilter(user_ignore_patterns)
+    custom_ignore = IgnoreFilter(user_ignore_patterns + exclude_patterns)
 
     if use_default_ignores:
         print(format_log('Using default ignore patterns.', '🚫'))
@@ -164,10 +168,10 @@ async def aggregate_files(input_patterns: List[str], exclude_patterns: List[str]
         relative_path = os.path.relpath(file)
         if os.path.abspath(output_file) == file:
             continue
-        if use_default_ignores and default_ignore.ignores(relative_path):
+        if use_default_ignores and default_ignore.ignores(file):
             default_ignored_count += 1
             continue
-        if custom_ignore.ignores(relative_path):
+        if custom_ignore.ignores(file):
             custom_ignored_count += 1
             continue
 
@@ -208,7 +212,7 @@ async def aggregate_files(input_patterns: List[str], exclude_patterns: List[str]
     if use_default_ignores:
         print(format_log(f"Files ignored by default patterns: {default_ignored_count}", '🚫'))
     if custom_ignored_count > 0:
-        print(format_log(f"Files ignored by .aidigestignore: {custom_ignored_count}", '🚫'))
+        print(format_log(f"Files ignored by .aidigestignore and exclude patterns: {custom_ignored_count}", '🚫'))
     print(format_log(f"Binary and SVG files included: {binary_and_svg_file_count}", '📦'))
 
     if file_size_in_bytes > MAX_FILE_SIZE:
