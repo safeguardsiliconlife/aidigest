@@ -27,7 +27,8 @@ DEFAULT_IGNORES = [
     '*.bak', '*.tmp', '*.temp',
     '*.o', '*.obj', '*.exe', '*.dll', '*.so', '*.dylib',
     '*.jar', '*.war', '*.ear', '*.sar', '*.class',
-    '*.lock', '*.DS_Store', 'Thumbs.db'
+    '*.lock', '*.DS_Store', 'Thumbs.db',
+    'aidigest/*'  # Exclude everything in the aidigest folder
 ]
 
 
