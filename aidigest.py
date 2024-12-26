@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# Example usage:
+# Basic:    aidigest .
+# Exclude:  aidigest . --exclude ./templates/ utils/ static/ _context/ .zzz aidigest/ **__pycache__** query_history.json .gitignore LICENSE
 
 import os
 import sys
@@ -274,7 +277,8 @@ def main():
     parser = argparse.ArgumentParser(description='Aggregate files into a single Markdown file')
     parser.add_argument('input', nargs='*', default=['.'], help='Input files or directories (glob patterns supported)')
     parser.add_argument('-o', '--output', type=str, default=os.getcwd(), help='Base output directory (default: current working directory)')
-    parser.add_argument('--exclude', nargs='*', default=[], help='Exclude patterns (glob syntax supported)')
+    parser.add_argument('--exclude', nargs='*', default=[], 
+                       help='Exclude patterns (glob syntax supported). Example: --exclude ./templates/ utils/ static/ _context/ .zzz aidigest/ **__pycache__** query_history.json .gitignore LICENSE')
     parser.add_argument('--no-default-ignores', action='store_false', dest='default_ignores', help='Disable default ignore patterns')
     parser.add_argument('--whitespace-removal', action='store_true', help='Enable whitespace removal')
     parser.add_argument('--show-output-files', action='store_true', help='Display a list of files included in the output')
