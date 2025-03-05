@@ -119,6 +119,7 @@ async def is_text_file(file_path: str) -> bool:
         return file_type.startswith("text/") or file_type in [
             "application/json",
             "application/xml",
+            "application/javascript",
         ]
     except Exception as e:
         print(format_log(f"Error determining file type for {file_path}: {str(e)}", "⚠️"))
