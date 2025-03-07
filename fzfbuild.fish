@@ -1,6 +1,6 @@
 function fzfbuild -d "Build a single file from interactively selected files"
     # Parse arguments
-    set -l output_file "build"
+    set -l output_file "byfzfbuild"
     set -l help_flag 0
     
     for i in (seq 1 (count $argv))
