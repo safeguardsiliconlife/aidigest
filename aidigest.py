@@ -59,6 +59,7 @@ DEFAULT_IGNORES = [
     "*.DS_Store",
     "Thumbs.db",
     "aidigest/*",  # Exclude everything in the aidigest folder
+    "aidigest/*/info.txt",
 ]
 
 
